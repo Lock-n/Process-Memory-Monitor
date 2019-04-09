@@ -6,7 +6,7 @@
         {
             "label": "Run",
             "type": "shell",
-            "command": "run.cmd",
+            "command": "python ${fileBasename}",
             "group": {
                 "kind": "build",
                 "isDefault": true

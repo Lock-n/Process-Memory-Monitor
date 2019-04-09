@@ -57,21 +57,44 @@ def find_process(name: str, get_with_greatest_memory_usage=False):
                 else:
                     return proc
         except psutil.NoSuchProcess:
-            pass
+            continue
     
     return None if not get_with_greatest_memory_usage else process_with_greatest_memory
 
-p_name = "veyon-server.exe"
-p = find_process(p_name)
+def find_processes(names: list):
+    process_with_greatest_memory = None
+    processes = []
+    for proc in psutil.process_iter():
+        try:
+            if proc.name() in names:
+                    processes.append(proc)
+        except psutil.NoSuchProcess:
+            continue
+    
+    return processes
+
+names = []
+try:
+    with open("list.txt", "r") as handle:
+        names.append(handle.readline())
+        handle.close()
+except FileNotFoundError as fnfe:
+    print("WARNING: No processes will be closed on detection")
+
+TARGET_NAME = "veyon-server.exe"
+SLEEP_TIME_SEC = 0.5
+
+target = find_process(TARGET_NAME)
+
+killable_processes = find_processes(names)
 
 base_memory = None
-
-if (p):
+if (target is not None):
     t_input = inputThread()
     t_input.start()
 
     while (t_input.isAlive()):
-        minfo = p.memory_info()
+        minfo = target.memory_info()
         
         memory_usage = minfo.rss
         memory_usage_kilobytes = memory_usage / 1024
@@ -82,9 +105,13 @@ if (p):
             base_memory = memory_usage_kilobytes
 
         if (memory_usage_kilobytes > base_memory + 1000):
+            for killable_process in killable_processes:
+                killable_process.kill()
+                killable_processes.remove(killable_process)
+            
             Mbox("Hm...", "Maybe...", 0)
 
         try:
-            time.sleep(0.5)
+            time.sleep(SLEEP_TIME_SEC)
         except KeyboardInterrupt:
             break
