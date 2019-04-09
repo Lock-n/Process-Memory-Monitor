@@ -83,6 +83,7 @@ except FileNotFoundError as fnfe:
 
 TARGET_NAME = "veyon-server.exe"
 SLEEP_TIME_SEC = 0.5
+N_ITERATIONS_TO_PRINT = 5
 
 target = find_process(TARGET_NAME)
 
@@ -93,13 +94,19 @@ if (target is not None):
     t_input = inputThread()
     t_input.start()
 
+    iterations_count = 1
     while (t_input.isAlive()):
         minfo = target.memory_info()
         
         memory_usage = minfo.rss
         memory_usage_kilobytes = memory_usage / 1024
-        memory_usage_megabytes = memory_usage_kilobytes / 1024
-        print("Memory usage: " + str(memory_usage_kilobytes) + " KB")
+        #memory_usage_megabytes = memory_usage_kilobytes / 1024
+        
+        if (iterations_count == N_ITERATIONS_TO_PRINT):
+            print("Memory usage: " + str(memory_usage_kilobytes) + " KB")
+            iterations_count = 1
+        else:
+            iterations_count = iterations_count + 1
 
         if (not base_memory):
             base_memory = memory_usage_kilobytes
@@ -115,3 +122,5 @@ if (target is not None):
             time.sleep(SLEEP_TIME_SEC)
         except KeyboardInterrupt:
             break
+        
+        
